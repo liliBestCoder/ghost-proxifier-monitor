@@ -1,0 +1,36 @@
+name: Deploy Ghost Monitor Server
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Copy files to Remote Server via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          source: "monitor_server.py,sync_history.py,get_token.py,verify_apis.py,web/"
+          target: "/root/ghost-proxifier-monitor"
+
+      - name: Restart Service via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          script: |
+            fuser -k 8000/tcp || true
+            pkill -9 -f monitor_server.py || true
+            systemctl restart ghost-monitor
+            systemctl is-active ghost-monitor

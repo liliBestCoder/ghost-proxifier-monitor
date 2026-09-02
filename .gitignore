@@ -1,0 +1,19 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Database & Runtime logs
+monitor.db
+*.db
+
+# Sensitive Configs & Credentials
+config.json
+check_uv.py
+ssh_cmd.py
+deploy_remote.py
+
+# OS / Editor temporary files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

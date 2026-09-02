@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghost Proxifier Pro - 监控看板</title>
+    <!-- Local Fonts -->
+    <link rel="stylesheet" href="fonts.css?v=1.1.8">
+    <!-- Chart.js Local -->
+    <script src="chart.js"></script>
+    <link rel="stylesheet" href="app.css?v=1.1.8">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="main-header">
+            <div class="header-brand">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1>GHOST PROXIFIER</h1>
+                    <span class="sub-brand">PROFESSIONAL MONITOR</span>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <div id="badge-github" class="badge badge-live">
+                    <span class="pulse-dot"></span>
+                    <span class="badge-text">GitHub: 实时</span>
+                </div>
+                <div id="badge-baidu" class="badge badge-mock">
+                    <span class="pulse-dot"></span>
+                    <span class="badge-text">百度统计: 模拟</span>
+                </div>
+                
+                <div class="refresh-indicator">
+                    <span id="last-update-time">未更新</span>
+                    <button id="btn-refresh" class="btn-icon" title="手动刷新">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" class="sync-icon">
+                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <button id="btn-settings" class="btn-primary">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>配置中心</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Message Banner -->
+        <div id="warmup-banner" class="banner banner-info hidden">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <span class="banner-text">系统正在进行数据初始化累积，30分钟增量数据将在暖机完成后以更精准的值呈现。</span>
+        </div>
+
+        <div id="error-banner" class="banner banner-error hidden">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span id="error-message" class="banner-text">连接监控服务失败，请检查后端 Python 服务是否正常运行。</span>
+        </div>
+
+        <!-- Metric Grid -->
+        <section class="metrics-grid">
+            <!-- Card 1: GitHub Stars -->
+            <div class="metric-card" id="card-stars">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="card-icon icon-purple">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <span class="card-label">GitHub Stars 总数</span>
+                    </div>
+                    <span class="api-status" id="status-github-stars">●</span>
+                </div>
+                <div class="card-body">
+                    <div class="metric-value-container">
+                        <span id="stars-total" class="metric-value">--</span>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="delta-badge" id="stars-delta-container">
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3">
+                            <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+                        </svg>
+                        <span id="stars-delta">--</span>
+                    </div>
+                    <span class="footer-note">最近 30 分钟新增</span>
+                </div>
+            </div>
+
+            <!-- Card 2: MSI Downloads -->
+            <div class="metric-card" id="card-downloads">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="card-icon icon-cyan">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <span class="card-label">MSI 安装包下载量 <span id="msi-version-tag" class="version-tag">v1.1.5</span></span>
+                    </div>
+                    <span class="api-status" id="status-github-downloads">●</span>
+                </div>
+                <div class="card-body">
+                    <div class="metric-value-container">
+                        <span id="downloads-total" class="metric-value">--</span>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="delta-badge" id="downloads-delta-container">
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3">
+                            <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+                        </svg>
+                        <span id="downloads-delta">--</span>
+                    </div>
+                    <span class="footer-note">最近 30 分钟新增</span>
+                </div>
+            </div>
+
+            <!-- Card 3: Today UV -->
+            <div class="metric-card" id="card-uv">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="card-icon icon-pink">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <span class="card-label">今日独立访客 (全球 UV)</span>
+                    </div>
+                    <span class="api-status" id="status-baidu-uv">●</span>
+                </div>
+                <div class="card-body">
+                    <div class="metric-value-container">
+                        <span id="uv-total" class="metric-value">--</span>
+                    </div>
+                    <div class="uv-breakdown">
+                        <span class="uv-breakdown-item">
+                            <span class="uv-dot uv-dot-new"></span>
+                            <span>新客</span>
+                            <span id="uv-new" class="uv-num">--</span>
+                        </span>
+                        <span class="uv-breakdown-item">
+                            <span class="uv-dot uv-dot-old"></span>
+                            <span>老客</span>
+                            <span id="uv-old" class="uv-num">--</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="uv-compare-tag">
+                        <span class="compare-label">昨日总数</span>
+                        <span id="uv-yesterday" class="compare-value">--</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content Area: UV Chart + Geography -->
+        <div class="content-grid">
+            <!-- Chart Section -->
+            <main class="chart-section">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-header-left">
+                            <h2 id="chart-title" class="chart-title">最近两周每日访客变化曲线 (UV)</h2>
+                            <p id="chart-subtitle" class="chart-subtitle">过去14天每日独立访客数量 (UV) 变化趋势与新老访客分布</p>
+                        </div>
+                        <div class="chart-header-right">
+                            <div class="chart-toggle">
+                                <button type="button" id="btn-chart-7d" class="btn-toggle active">近14天每日</button>
+                                <button type="button" id="btn-chart-24h" class="btn-toggle">今日24h</button>
+                            </div>
+                            <div id="chart-legend" class="chart-legend">
+                                <div class="legend-item">
+                                    <span class="legend-color legend-today"></span>
+                                    <span>总访客 (UV)</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-color legend-new"></span>
+                                    <span>新访客 (UV)</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-color legend-old"></span>
+                                    <span>老访客 (UV)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <div class="chart-container">
+                            <canvas id="uvTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Geography Section -->
+            <section class="geo-section">
+                <div class="geo-card">
+                    <div class="geo-header">
+                        <div class="geo-header-left">
+                            <h2 class="geo-title">访客地域分布排行</h2>
+                            <p class="geo-subtitle">分析不同省份/地区的独立访客占比</p>
+                        </div>
+                        <div class="geo-toggle">
+                            <button type="button" id="btn-geo-today" class="btn-toggle active">今日</button>
+                            <button type="button" id="btn-geo-yesterday" class="btn-toggle">昨日</button>
+                        </div>
+                    </div>
+                    <div class="geo-body">
+                        <div id="geo-list" class="geo-list">
+                            <div class="empty-state">暂无地域数据</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Deep Traffic Analysis: New Visitor Geography & All Visitor Country Distribution -->
+        <div class="analysis-grid">
+            <!-- New Visitor Geography -->
+            <section class="analysis-card-wrapper full-width-card">
+                <div class="analysis-card">
+                    <div class="analysis-header">
+                        <div class="analysis-header-left">
+                            <h2 class="analysis-title">24小时访客地域分布</h2>
+                            <p class="analysis-subtitle">按 24 小时时间顺序排列展示每个小时的独立访客（新客与老客）地域分布与数量</p>
+                        </div>
+                        <div class="analysis-toggle">
+                            <button type="button" id="btn-newgeo-today" class="btn-toggle active">今日</button>
+                            <button type="button" id="btn-newgeo-yesterday" class="btn-toggle">昨日</button>
+                        </div>
+                    </div>
+                    <div class="analysis-body">
+                        <div id="hourly-geo-grid" class="hourly-geo-grid"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Today's Visitors Historical Trace Section -->
+        <div class="analysis-grid" style="margin-top: 24px;">
+            <section class="analysis-card-wrapper full-width-card">
+                <div class="analysis-card">
+                    <div class="analysis-header">
+                        <div class="analysis-header-left">
+                            <h2 class="analysis-title" id="trace-title">今日访客历史访问轨迹表</h2>
+                            <p class="analysis-subtitle" id="trace-subtitle">全量追踪今日所有来访访客的地区归属、IP地址、历史累计天数及详细访问日期清单</p>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <div class="analysis-toggle">
+                                <button type="button" id="btn-trace-today" class="btn-toggle active">今日</button>
+                                <button type="button" id="btn-trace-yesterday" class="btn-toggle">昨日</button>
+                            </div>
+                            <div class="retention-summary-badge">
+                                <span id="trace-count-label">今日访客数: </span><strong id="today-visitors-count">--</strong> 人
+                            </div>
+                        </div>
+                    </div>
+                    <div class="analysis-body">
+                        <div class="today-visitors-table-wrapper">
+                            <table class="today-visitors-table">
+                                <thead>
+                                    <tr>
+                                        <th>访客地区</th>
+                                        <th>IP 地址</th>
+                                        <th>访客类型</th>
+                                        <th>访问天数</th>
+                                        <th>历史访问日期明细 (具体打卡日期)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="today-visitors-tbody">
+                                    <tr><td colspan="5" class="empty-state">正在加载今日访客数据...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- User Churn Analysis Section -->
+        <div class="analysis-grid" style="margin-top: 24px;">
+            <section class="analysis-card-wrapper full-width-card">
+                <div class="analysis-card">
+                    <div class="analysis-header">
+                        <div class="analysis-header-left">
+                            <h2 class="analysis-title">老客流失与沉寂分析 (过滤单次尝鲜访客)</h2>
+                            <p class="analysis-subtitle">只针对历史打卡 ≥2 天的老客 (共 <span id="repeat-visitor-total">--</span> 人) 统计沉寂分布，自动过滤 <span id="single-visitor-total">--</span> 名单次偶然访问流量</p>
+                        </div>
+                        <div class="retention-summary-badge">
+                            <span>老客沉寂/流失基数: </span><strong id="churn-total-count">--</strong> 人
+                        </div>
+                    </div>
+                    <div class="analysis-body">
+                        <!-- High Stickiness Cultivation Headline Banner -->
+                        <div class="sticky-cultivation-banner">
+                            <div class="sticky-banner-left">
+                                <div class="sticky-banner-icon">🎯</div>
+                                <div class="sticky-banner-text">
+                                    <div class="sticky-banner-title">高粘性老客培育周期 (打卡≥3天用户)</div>
+                                    <div class="sticky-banner-sub">达成 3 天打卡的高粘性用户 (共 <strong id="sticky-user-count">--</strong> 人)，从首次访问到完成第 3 次打卡平均历时</div>
+                                </div>
+                            </div>
+                            <div class="sticky-banner-stat">
+                                <span class="sticky-stat-label">平均培育天数</span>
+                                <span class="sticky-stat-val"><strong id="avg-cultivation-days">--</strong> <small>自然天</small></span>
+                            </div>
+                        </div>
+
+                        <!-- 4 Gap Metrics Sub-Banner -->
+                        <div class="gap-metrics-grid">
+                            <div class="gap-metric-card">
+                                <div class="gap-card-header">
+                                    <span class="gap-card-title">老客 Gap</span>
+                                </div>
+                                <div class="gap-card-body">
+                                    <span class="gap-card-val" id="gap-laoke">--</span>
+                                    <span class="gap-card-unit">天</span>
+                                </div>
+                                <div class="gap-card-desc">老客日常打卡间隔</div>
+                            </div>
+                            <div class="gap-metric-card">
+                                <div class="gap-card-header">
+                                    <span class="gap-card-title">新客 Gap</span>
+                                </div>
+                                <div class="gap-card-body">
+                                    <span class="gap-card-val" id="gap-xinke">--</span>
+                                    <span class="gap-card-unit">天</span>
+                                </div>
+                                <div class="gap-card-desc">第1次到第2次复访</div>
+                            </div>
+                            <div class="gap-metric-card">
+                                <div class="gap-card-header">
+                                    <span class="gap-card-title">重返 Gap</span>
+                                </div>
+                                <div class="gap-card-body">
+                                    <span class="gap-card-val" id="gap-chongfan">--</span>
+                                    <span class="gap-card-unit">天</span>
+                                </div>
+                                <div class="gap-card-desc">沉寂中断后重返唤醒</div>
+                            </div>
+                            <div class="gap-metric-card">
+                                <div class="gap-card-header">
+                                    <span class="gap-card-title">沉寂 Gap</span>
+                                </div>
+                                <div class="gap-card-body">
+                                    <span class="gap-card-val" id="gap-chenji">--</span>
+                                    <span class="gap-card-unit">天</span>
+                                </div>
+                                <div class="gap-card-desc">流失老客平均休眠</div>
+                            </div>
+                        </div>
+
+                        <!-- Churn Tier Cards (3 Tiers: Starting from 7 days) -->
+                        <div class="churn-cards-grid">
+                            <!-- Card 1: 7-13 Days Mild Churn (Orange) -->
+                            <div class="churn-tier-card tier-7-13" id="churn-card-7-13">
+                                <div class="churn-card-header">
+                                    <span class="churn-tier-title">7-13天 轻度流失</span>
+                                    <div id="churn-badge-7-13" class="churn-badge-container"></div>
+                                </div>
+                                <div class="churn-card-body">
+                                    <span class="churn-card-count" id="churn-count-7-13">-- 人</span>
+                                    <span class="churn-card-pct" id="churn-pct-7-13">(--%)</span>
+                                </div>
+                            </div>
+
+                            <!-- Card 2: 14-29 Days Moderate Churn (Pink/Red) -->
+                            <div class="churn-tier-card tier-14-29" id="churn-card-14-29">
+                                <div class="churn-card-header">
+                                    <span class="churn-tier-title">14-29天 中度流失</span>
+                                    <div id="churn-badge-14-29" class="churn-badge-container"></div>
+                                </div>
+                                <div class="churn-card-body">
+                                    <span class="churn-card-count" id="churn-count-14-29">-- 人</span>
+                                    <span class="churn-card-pct" id="churn-pct-14-29">(--%)</span>
+                                </div>
+                            </div>
+
+                            <!-- Card 3: >=30 Days Severe Churn (Dark Red) -->
+                            <div class="churn-tier-card tier-30-plus" id="churn-card-30-plus">
+                                <div class="churn-card-header">
+                                    <span class="churn-tier-title">≥30天 重度流失</span>
+                                    <div id="churn-badge-30-plus" class="churn-badge-container"></div>
+                                </div>
+                                <div class="churn-card-body">
+                                    <span class="churn-card-count" id="churn-count-30-plus">-- 人</span>
+                                    <span class="churn-card-pct" id="churn-pct-30-plus">(--%)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Single Integrated 3-Color Churn Distribution Bar -->
+                        <div class="churn-bar-container">
+                            <div class="churn-bar">
+                                <div id="churn-bar-7-13" class="churn-bar-seg seg-7-13" style="width: 33.3%;"></div>
+                                <div id="churn-bar-14-29" class="churn-bar-seg seg-14-29" style="width: 33.3%;"></div>
+                                <div id="churn-bar-30-plus" class="churn-bar-seg seg-30-plus" style="width: 33.3%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Retention & Continuous Usage Analysis Section -->
+        <div class="analysis-grid" style="margin-top: 24px;">
+            <section class="analysis-card-wrapper full-width-card">
+                <div class="analysis-card">
+                    <div class="analysis-header">
+                        <div class="analysis-header-left">
+                            <h2 class="analysis-title">访客活跃使用天数分布 (互斥分段)</h2>
+                            <p class="analysis-subtitle">按访客标识在日志表中自动去重，互斥分段统计活跃打卡天数分布 (1天 / 2天 / 3~4天 / 5~8天 / 9~14天 / 15~29天 / ≥30天)，各分段百分比相加为 100%</p>
+                        </div>
+                        <div class="retention-summary-badge">
+                            <span>分析访客基数: </span><strong id="retention-total-visitors">--</strong> 人
+                        </div>
+                    </div>
+                    <div class="analysis-body">
+                        <!-- Stat Grid Cards (Mutually Exclusive 7 Tiers) -->
+                        <div class="retention-grid">
+                            <div class="retention-card streak-1">
+                                <div class="retention-icon">🌱</div>
+                                <div class="retention-info">
+                                    <span class="retention-label">只活跃 1天</span>
+                                    <div class="retention-value"><span id="retention-cnt-1">--</span> <small>人</small><span id="retention-badge-1" class="retention-badge-container"></span></div>
+                                </div>
+                                <div class="retention-ratio-badge" id="retention-ratio-1">--%</div>
+                            </div>
+                            <div class="retention-card streak-2">
+                                <div class="retention-icon">🌿</div>
+                                <div class="retention-info">
+                                    <span class="retention-label">活跃 2天</span>
+                                    <div class="retention-value"><span id="retention-cnt-2">--</span> <small>人</small><span id="retention-badge-2" class="retention-badge-container"></span></div>
+                                </div>
+                                <div class="retention-ratio-badge" id="retention-ratio-2">--%</div>
+                            </div>
+                            <div class="retention-card streak-3">
+                                <div class="retention-icon">🔥</div>
+                                <div class="retention-info">
+                                    <span class="retention-label">活跃 3~4天</span>
+                                    <div class="retention-value"><span id="retention-cnt-3">--</span> <small>人</small><span id="retention-badge-3" class="retention-badge-container"></span></div>
+                                </div>
+                                <div class="retention-ratio-badge" id="retention-ratio-3">--%</div>
+                            </div>
+                            <div class="retention-card streak-5">
+                                <div class="retention-icon">⚡</div>
+                                <div class="retention-info">
+                                    <span class="retention-label">活跃 5~8天</span>
+                                    <div class="retention-value"><span id="retention-cnt-5">--</span> <small>人</small><span id="retention-badge-5" class="retention-badge-container"></span></div>
+                                </div>
+                                <div class="retention-ratio-badge" id="retention-ratio-5">--%</div>
+                            </div>
+                            <div class="retention-card streak-9">
+                                <div class="retention-icon">🚀</div>
+                                <div class="retention-info">
+                                    <span class="retention-label">活跃 9~14天</span>
+                                    <div class="retention-value"><span id="retention-cnt-9">--</span> <small>人</small><span id="retention-badge-9" class="retention-badge-container"></span></div>
+                                </div>
+                                <div class="retention-ratio-badge" id="retention-ratio-9">--%</div>
+                            </div>
+                            <div class="retention-card streak-15">
+                                <div class="retention-icon">⭐</div>
+                                <div class="retention-info">
+                                    <span class="retention-label">活跃 15~29天</span>
+                                    <div class="retention-value"><span id="retention-cnt-15">--</span> <small>人</small><span id="retention-badge-15" class="retention-badge-container"></span></div>
+                                </div>
+                                <div class="retention-ratio-badge" id="retention-ratio-15">--%</div>
+                            </div>
+                            <div class="retention-card streak-30">
+                                <div class="retention-icon">👑</div>
+                                <div class="retention-info">
+                                    <span class="retention-label">活跃 ≥30天</span>
+                                    <div class="retention-value"><span id="retention-cnt-30">--</span> <small>人</small><span id="retention-badge-30" class="retention-badge-container"></span></div>
+                                </div>
+                                <div class="retention-ratio-badge" id="retention-ratio-30">--%</div>
+                            </div>
+                        </div>
+
+                        <!-- Retention Chart -->
+                        <div class="retention-chart-container" style="position: relative; height: 260px; margin-top: 20px;">
+                            <canvas id="retentionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay hidden">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>配置中心 (Credentials Setup)</h3>
+                <button id="btn-close-modal" class="btn-icon">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="config-form">
+                <div class="modal-body">
+                    <p class="form-desc">在此处配置 API 凭证。若留空或未配置，系统会自动开启高保真的 <b>Mock 模式</b> 供体验与展示。</p>
+                    
+                    <!-- GitHub Section -->
+                    <div class="form-section">
+                        <h4 class="section-title">GitHub API & 版本配置</h4>
+                        <div class="form-group">
+                            <label for="github_token">GitHub Personal Access Token (可选)</label>
+                            <input type="password" id="github_token" placeholder="输入 ghp_ 开头的 Token 以避免 API 限制">
+                            <span class="input-hint">用于监控 star 数量和安装包下载数。不配置则使用公共 API (受限于 60次/小时 限制)。</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="msi_version">MSI 安装包 Tag 版本号</label>
+                            <input type="text" id="msi_version" placeholder="例如: v1.1.5 或 1.1.6">
+                            <span class="input-hint">指定 GitHub Release 版本 Tag，用于统计对应安装包的下载数据。</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Baidu Tongji Section -->
+                    <div class="form-section">
+                        <h4 class="section-title">百度统计 API 配置</h4>
+                        
+                        <div class="form-group">
+                            <label for="baidu_site_id">站点 ID (Site ID) *</label>
+                            <input type="text" id="baidu_site_id" placeholder="例如: 18456729">
+                            <span class="input-hint">登录百度统计后台，在 URL 中查找的 Site ID。</span>
+                        </div>
+
+
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" id="btn-cancel-config" class="btn-secondary">取消</button>
+                    <button type="submit" class="btn-primary">保存配置</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="app.js?v=1.1.8"></script>
+</body>
+</html>

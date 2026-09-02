@@ -1,0 +1,15 @@
+{
+    "github_token": "",
+    "msi_version": "v1.1.5",
+    "baidu_site_id": "",
+    "baidu_username": "",
+    "baidu_password": "",
+    "baidu_token": "",
+    "baidu_access_token": "",
+    "baidu_refresh_token": "",
+    "baidu_client_id": "",
+    "baidu_client_secret": "",
+    "ip_blacklist": [
+        "106.225.235.246"
+    ]
+}
