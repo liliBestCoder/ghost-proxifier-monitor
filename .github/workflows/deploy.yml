@@ -3,6 +3,9 @@ name: Deploy Ghost Monitor Server
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - 'README.md'
+      - '.gitignore'
   workflow_dispatch:
 
 jobs:
@@ -30,7 +33,6 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
           script: |
-            fuser -k 8000/tcp || true
-            pkill -9 -f monitor_server.py || true
-            systemctl restart ghost-monitor
+            systemctl restart ghost-monitor || (pkill -9 -f "[m]onitor_server.py" || true; systemctl restart ghost-monitor)
             systemctl is-active ghost-monitor
+
