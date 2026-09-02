@@ -415,38 +415,41 @@ def get_visitor_retention_stats():
 
         tier_list = ['streak_1', 'streak_2', 'streak_3', 'streak_5', 'streak_9', 'streak_15', 'streak_30']
         cur_counts = {t: 0 for t in tier_list}
-        prev_counts = {t: 0 for t in tier_list}
+        today_inflow = {t: 0 for t in tier_list}
 
         for vid, dates in v_dates_map.items():
             cur_days = len(dates)
             prev_days = sum(1 for d in dates if d < today_str)
+            visited_today = any(d == today_str for d in dates)
             
             cur_t = get_tier(cur_days)
             prev_t = get_tier(prev_days)
             
-            if cur_t: cur_counts[cur_t] += 1
-            if prev_t: prev_counts[prev_t] += 1
+            if cur_t:
+                cur_counts[cur_t] += 1
+                if cur_days == 1: s1 += 1
+                elif cur_days == 2: s2 += 1
+                elif 3 <= cur_days <= 4: s3 += 1
+                elif 5 <= cur_days <= 8: s5 += 1
+                elif 9 <= cur_days <= 14: s9 += 1
+                elif 15 <= cur_days <= 29: s15 += 1
+                elif cur_days >= 30: s30 += 1
 
-            if cur_days == 1: s1 += 1
-            elif cur_days == 2: s2 += 1
-            elif 3 <= cur_days <= 4: s3 += 1
-            elif 5 <= cur_days <= 8: s5 += 1
-            elif 9 <= cur_days <= 14: s9 += 1
-            elif 15 <= cur_days <= 29: s15 += 1
-            elif cur_days >= 30: s30 += 1
+            # Option B logic: Count cumulative new entrants/promotions to each tier today (only increases, never decreases during the day)
+            if visited_today and cur_t and (cur_t != prev_t):
+                today_inflow[cur_t] += 1
 
-        net_changes = {t: cur_counts[t] - prev_counts[t] for t in tier_list}
         calc_r = lambda cnt: round((cnt / total_visitors) * 100, 1) if total_visitors > 0 else 0.0
         
         return {
             "total_visitors": total_visitors,
-            "streak_1": s1, "ratio_1": calc_r(s1), "net_1": net_changes['streak_1'],
-            "streak_2": s2, "ratio_2": calc_r(s2), "net_2": net_changes['streak_2'],
-            "streak_3": s3, "ratio_3": calc_r(s3), "net_3": net_changes['streak_3'],
-            "streak_5": s5, "ratio_5": calc_r(s5), "net_5": net_changes['streak_5'],
-            "streak_9": s9, "ratio_9": calc_r(s9), "net_9": net_changes['streak_9'],
-            "streak_15": s15, "ratio_15": calc_r(s15), "net_15": net_changes['streak_15'],
-            "streak_30": s30, "ratio_30": calc_r(s30), "net_30": net_changes['streak_30']
+            "streak_1": s1, "ratio_1": calc_r(s1), "net_1": today_inflow['streak_1'],
+            "streak_2": s2, "ratio_2": calc_r(s2), "net_2": today_inflow['streak_2'],
+            "streak_3": s3, "ratio_3": calc_r(s3), "net_3": today_inflow['streak_3'],
+            "streak_5": s5, "ratio_5": calc_r(s5), "net_5": today_inflow['streak_5'],
+            "streak_9": s9, "ratio_9": calc_r(s9), "net_9": today_inflow['streak_9'],
+            "streak_15": s15, "ratio_15": calc_r(s15), "net_15": today_inflow['streak_15'],
+            "streak_30": s30, "ratio_30": calc_r(s30), "net_30": today_inflow['streak_30']
         }
     except Exception as e:
         print(f"[ERROR] Failed to calculate retention stats: {e}")
