@@ -52,10 +52,7 @@ ghost-proxifier-monitor/
 ## 🚀 快速开始
 
 ### 1. 环境要求
-项目后端仅依赖 Python 3.8+ 标准库（`urllib`, `sqlite3`, `threading`, `http.server` 等），零额外第三方 Web 框架依赖。若需使用远程部署脚本，只需安装 `paramiko`：
-```bash
-pip install paramiko
-```
+项目后端仅依赖 Python 3.8+ 标准库（`urllib`, `sqlite3`, `threading`, `http.server` 等），零额外第三方 Web 框架依赖。
 
 ### 2. 配置文件初始化
 复制配置文件模板：
