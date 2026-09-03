@@ -37,8 +37,6 @@ ghost-proxifier-monitor/
 ├── get_token.py           # 百度 OAuth 2.0 Authorization Code 兑换 Token 工具
 ├── sync_history.py        # 百度统计历史访客日志增量同步/补全脚本
 ├── verify_apis.py         # 系统连通性与 API 接口诊断工具
-├── deploy_remote.py       # SSH / SFTP 远程服务器自动化部署脚本
-├── ssh_cmd.py             # SSH 远程命令执行辅助工具
 ├── config.json.example    # 配置文件模板
 ├── web/                   # 前端大屏静态资源
 │   ├── index.html         # 主界面 HTML 结构
@@ -115,16 +113,6 @@ python verify_apis.py
 ```
 检查项包括：SQLite3 数据库读写、GitHub Star 与 Release 下载量 API 连通性、百度统计 JSON 解析器测试。
 
-### 🚀 远程服务器部署 ([deploy_remote.py](file:///c:/Users/admin/Desktop/ghost-proxifier-monitor/deploy_remote.py))
-通过 SSH/SFTP 将本地最新的监控服务文件同步发布至远程服务器，并重启 `ghost-monitor` 服务：
-```bash
-# Windows PowerShell 示例
-$env:SERVER_HOST="101.201.215.20"
-$env:SERVER_USER="root"
-$env:SERVER_PASSWORD="your_password"
-python deploy_remote.py
-```
-
 ---
 
 ## 📡 后端 API 接口
@@ -140,7 +128,3 @@ python deploy_remote.py
 | `GET` | `/api/area_stats` | 获取访客省份地理分布统计 |
 
 ---
-
-## 📄 License
-
-MIT License
