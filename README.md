@@ -26,7 +26,6 @@
   - **历史数据补全 (`sync_history.py`)**：支持从百度统计 API 增量拉取过去 N 天的历史访客日志补齐至 SQLite3 数据库。
   - **Token 换取助手 (`get_token.py`)**：命令行快速完成百度 OAuth Code 到 Access Token 的兑换。
   - **自检诊断脚本 (`verify_apis.py`)**：一键校验 SQLite 数据库、GitHub API Rate Limit、百度 API 数据解析逻辑。
-  - **远程一键部署 (`deploy_remote.py`)**：基于 Paramiko 的 SSH/SFTP 自动上传与远程 `systemctl` 服务重启脚本。
 
 ---
 
