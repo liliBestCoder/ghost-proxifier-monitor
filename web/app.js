@@ -1057,7 +1057,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (data.baidu_district.visitors_detail) {
                         traceData = data.baidu_district.visitors_detail;
                     } else if (data.baidu_district.today_visitors_detail) {
-                        traceData = { today: data.baidu_district.today_visitors_detail, yesterday: [] };
+                        traceData = { 
+                            today: data.baidu_district.today_visitors_detail, 
+                            yesterday: data.baidu_district.yesterday_visitors_detail || [] 
+                        };
                     }
                     renderGeoList();
                     renderHourlyNewGeoGrid();

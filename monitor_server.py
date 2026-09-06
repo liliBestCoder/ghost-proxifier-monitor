@@ -807,7 +807,7 @@ def generate_hourly_geo_breakdown(hourly_uv_list, districts_list, day_new_uv=0, 
     return hourly_geo
 
 
-metrics_cache = {"data": None, "last_update": 0}
+metrics_cache = {"data": None, "last_update": 0, "cache_date": None}
 cache_lock = threading.Lock()
 
 def insert_stats(stars, downloads):
@@ -1393,18 +1393,19 @@ def update_stats_once():
         "churn": get_churn_analysis()
     }
 
-    # Only save to cache if we have valid non-zero stats or if cache is empty
+    # Save to cache with date tracking so cross-day transitions force a fresh recalculation
     with cache_lock:
-        if metrics_cache.get("data") is None or aggregated.get("baidu", {}).get("today_total_uv", 0) > 0:
-            metrics_cache["data"] = aggregated
-            metrics_cache["last_update"] = time.time()
+        metrics_cache["data"] = aggregated
+        metrics_cache["last_update"] = time.time()
+        metrics_cache["cache_date"] = today_str
 
     print("[INFO] Background Tracker: Stats updated successfully.")
     return aggregated
 
 def get_current_metrics():
+    today_str = datetime.now().strftime("%Y-%m-%d")
     with cache_lock:
-        if metrics_cache.get("data") and metrics_cache["data"].get("baidu", {}).get("today_total_uv", 0) > 0:
+        if metrics_cache.get("data") and metrics_cache.get("cache_date") == today_str:
             return metrics_cache["data"]
     return update_stats_once()
 
