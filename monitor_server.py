@@ -1198,6 +1198,19 @@ def get_day_visitors_detail(formatted_date):
             if not v_dates:
                 v_dates = [formatted_date]
 
+            prev_dates = [d for d in v_dates if d < formatted_date]
+            is_reactivated = False
+            gap_days = 0
+            if prev_dates:
+                try:
+                    target_dt = datetime.strptime(formatted_date, "%Y-%m-%d").date()
+                    last_prev_dt = datetime.strptime(prev_dates[-1], "%Y-%m-%d").date()
+                    gap_days = (target_dt - last_prev_dt).days
+                    if gap_days >= 3:
+                        is_reactivated = True
+                except Exception:
+                    pass
+
             visitors_detail.append({
                 "visitor_id": vid,
                 "first_today_time": first_time,
@@ -1205,6 +1218,8 @@ def get_day_visitors_detail(formatted_date):
                 "ip": ip,
                 "visitor_type": vtype or "新访客",
                 "is_foreign": bool(is_foreign),
+                "is_reactivated": is_reactivated,
+                "gap_days": gap_days,
                 "dates": v_dates,
                 "days_count": len(v_dates),
                 "first_date": v_dates[0],
