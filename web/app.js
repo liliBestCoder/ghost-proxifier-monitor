@@ -863,15 +863,17 @@ document.addEventListener('DOMContentLoaded', () => {
             
             let datesHtml = '';
             if (datesToUse.length >= 13 && item.first_date && item.last_date) {
-                const firstShort = item.first_date.slice(5);
-                const lastShort = item.last_date.slice(5);
+                const firstShort = String(item.first_date || '').slice(0, 10).slice(5);
+                const lastShort = String(item.last_date || '').slice(0, 10).slice(5);
                 datesHtml = `<span class="date-chip streak-full">🔥 ${firstShort} 至 ${lastShort} (${datesToUse.length}天全勤)</span>`;
             } else {
-                datesHtml = `<div class="date-chips-container">` + datesToUse.map(d => {
-                    const shortDate = d.slice(5);
-                    const isCur = (d === highlightTargetDate || shortDate === highlightTargetDate.slice(5));
+                datesHtml = `<div class="date-chips-container">` + datesToUse.map(rawD => {
+                    const cleanD = String(rawD || '').slice(0, 10);
+                    if (!cleanD || cleanD.length < 10) return '';
+                    const shortDate = cleanD.slice(5);
+                    const isCur = (cleanD === highlightTargetDate);
                     return `<span class="date-chip ${isCur ? 'today-chip' : ''}">${shortDate}${isCur ? highlightLabel : ''}</span>`;
-                }).join('') + `</div>`;
+                }).filter(Boolean).join('') + `</div>`;
             }
 
             return `
@@ -994,7 +996,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 elLastUpdateTime.textContent = `最近更新: ${now.toLocaleTimeString()}`;
                 
                 // Mode Badges
-                if (data.github.status === 'online') {
+                if (data.github.status === 'online' || data.github.status === 'ok') {
                     elBadgeGithub.className = 'badge badge-live';
                     elBadgeGithub.querySelector('.badge-text').textContent = 'GitHub: 正常';
                 } else if (data.github.status === 'cached') {
@@ -1007,13 +1009,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (data.baidu.status === 'online') {
                     elBadgeBaidu.className = 'badge badge-live';
-                    elBadgeBaidu.querySelector('.badge-text').textContent = '百度统计: 正常';
+                    elBadgeBaidu.querySelector('.badge-text').textContent = 'PostHog 统计: 正常';
                 } else if (data.baidu.status === 'unconfigured') {
                     elBadgeBaidu.className = 'badge badge-offline';
-                    elBadgeBaidu.querySelector('.badge-text').textContent = '百度统计: 未配置';
+                    elBadgeBaidu.querySelector('.badge-text').textContent = 'PostHog 统计: 未配置';
                 } else {
                     elBadgeBaidu.className = 'badge badge-mock';
-                    elBadgeBaidu.querySelector('.badge-text').textContent = '百度统计: 连接异常';
+                    elBadgeBaidu.querySelector('.badge-text').textContent = 'PostHog 统计: 连接异常';
                 }
 
                 // Warmup states
@@ -1061,6 +1063,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderHourlyNewGeoGrid();
                     renderCountryChartAndList();
                     renderTraceTable();
+                }
+
+                if (data.churn) {
+                    renderChurnAnalysis(data.churn);
                 }
 
                 function renderChurnAnalysis(churn) {

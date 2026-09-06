@@ -2,9 +2,12 @@
 __pycache__/
 *.py[cod]
 
-# Database & Runtime logs
+# Database & Runtime logs & Backups
 monitor.db
 *.db
+*.bak*
+reset_db_from_95.py
+wechat_articles/
 
 # Sensitive Configs & Credentials
 config.json
@@ -12,7 +15,9 @@ check_uv.py
 ssh_cmd.py
 deploy_remote.py
 
-# OS / Editor temporary files
+# Scratch directory
+scratch/
+
 .DS_Store
 Thumbs.db
 .vscode/
