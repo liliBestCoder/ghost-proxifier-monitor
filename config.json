@@ -1,0 +1,13 @@
+{
+    "github_token": "",
+    "msi_version": "v1.1.5",
+    "ip_blacklist": [
+        "106.225.235.246"
+    ],
+    "posthog": {
+        "api_host": "https://us.posthog.com",
+        "project_api_key": "phc_nF89Du7x954MRygk3pGNsnJ3GUdTZGeTKXXdnmJmwi9M",
+        "personal_api_key": "phx_Yw8ygXZrcEPbRFXK477AYJ6P6r2RzW9UbNbcW6GocP2SzS9Y",
+        "project_id": "593531"
+    }
+}
