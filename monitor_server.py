@@ -69,39 +69,10 @@ def normalize_existing_db_records(conn):
         cursor.execute("DELETE FROM visitor_logs WHERE visit_date LIKE '2027%'")
         cursor.execute("UPDATE visitor_daily_active SET visit_date = substr(visit_date, 1, 10) WHERE length(visit_date) > 10")
         cursor.execute("DELETE FROM visitor_daily_active WHERE visit_date LIKE '2027%' OR length(visit_date) != 10")
-        
-        # Re-resolve visitor_logs with real_ip
-        cursor.execute("SELECT id, area, area_raw, ip, is_foreign FROM visitor_logs")
-        logs = cursor.fetchall()
-        for log_id, area, area_raw, ip, is_foreign in logs:
-            if ip and ip != "--":
-                loc, foreign = resolve_ip_location(ip)
-                if foreign:
-                    norm_area = to_country_cn(loc or area)
-                    is_for = 1
-                else:
-                    norm_area = to_province(loc or area, area_raw or "")
-                    is_for = 0
-                if norm_area != area or is_for != is_foreign:
-                    cursor.execute("UPDATE visitor_logs SET area = ?, is_foreign = ? WHERE id = ?", (norm_area, is_for, log_id))
-
-        cursor.execute("SELECT visitor_id, primary_area, primary_ip, is_foreign FROM visitor_profile")
-        profiles = cursor.fetchall()
-        for vid, primary_area, primary_ip, is_foreign in profiles:
-            if primary_ip and primary_ip != "--":
-                loc, foreign = resolve_ip_location(primary_ip)
-                if foreign:
-                    norm_area = to_country_cn(loc or primary_area)
-                    is_for = 1
-                else:
-                    norm_area = to_province(loc or primary_area, "")
-                    is_for = 0
-                if norm_area != primary_area or is_for != is_foreign:
-                    cursor.execute("UPDATE visitor_profile SET primary_area = ?, is_foreign = ? WHERE visitor_id = ?", (norm_area, is_for, vid))
-
         conn.commit()
     except Exception as e:
         print(f"[WARNING] Normalize DB records failed: {e}")
+
 
 # Database Initialization
 def init_db():
@@ -960,11 +931,8 @@ def get_persisted_day_stats(date_str):
             return None
             
         unique_visitors = {}
-        blacklist = config.get("ip_blacklist", ["106.225.235.246"])
         for row in rows:
             vid, vtime, hour, area, visitor_type, is_foreign, area_raw, ip_str = row
-            if ip_str in blacklist or "106.225.235.246" in (ip_str or ""):
-                continue
             area = to_province(area, area_raw or "")
             if (not area or area in ("其他", "China", "中国", "未知")) and ip_str and ip_str != "--":
                 resolved_loc, resolved_foreign = resolve_ip_location(ip_str)
