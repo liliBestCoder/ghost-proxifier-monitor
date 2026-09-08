@@ -6,6 +6,8 @@ __pycache__/
 monitor.db
 *.db
 *.bak*
+!monitor.db.bak_20260831_113335
+!monitor.db.bak_20260905_003314
 reset_db_from_95.py
 wechat_articles/
 
